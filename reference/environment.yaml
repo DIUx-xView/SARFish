@@ -1,0 +1,26 @@
+# Sets the SARFish dataset root path for use in reference/SARFish_demo.ipynb
+# NOTE: It is a convention in this code that a path always has a '/' at the end.
+
+SARFISH_ROOT_DIRECTORY: /path/to/SARFish/root/
+xView3_SLC_GRD_correspondences_path: labels/xView3_SLC_GRD_correspondences.csv
+product_type: SLC
+
+FOLD:
+    FoldCSV: fold.csv
+    WhichFold: 1
+
+CREATE_TILE:
+    TileSize: 1024
+    TileOverlap: 64
+    TilePath: extracted_slc_chip/
+
+TRAIN:
+    TrainedModelPath: trained_model/
+    TensorBoardFolder: tb_log/
+    BatchSize: 8
+    NumberEpochs: 20
+    ModelSavingFreq: 5
+
+TEST:
+    ScoreThreshold: 0.3
+    EpochToUse: 19
