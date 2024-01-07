@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 from datetime import datetime, timezone
+import dateutil
 from pathlib import Path
 import re
 from typing import Tuple, List, Union, Dict
 import xml.etree.ElementTree as ET
 
-import iso8601
 import numpy as np
 import pandas as pd
 from scipy.interpolate import make_interp_spline
@@ -29,7 +29,7 @@ def string_to_list(string_of_floats: str) -> List[float]:
 
 def get_spacing_and_timing_from_annotation(
         annotation_path: Path
-    ) -> Tuple[float, float]:
+    ) -> Tuple[float, float, float, float, float]:
     with open(annotation_path, "r") as f:
         annotation_str = f.read()
 
@@ -44,7 +44,8 @@ def get_spacing_and_timing_from_annotation(
         imageInformation.find('azimuthPixelSpacing').text
     )
     firstAzimuthLineUTC = imageInformation.find('productFirstLineUtcTime').text 
-    firstAzimuthLineUTC = iso8601.parse_date(firstAzimuthLineUTC) 
+    firstAzimuthLineUTC = dateutil.parser.parse(firstAzimuthLineUTC)
+    firstAzimuthLineUTC = firstAzimuthLineUTC.replace(tzinfo = timezone.utc)
     firstAzimuthLineUnixTimeSeconds = datetime_to_unix_time(firstAzimuthLineUTC)
     azimuthLineTimeIntervalSeconds = float(
         imageInformation.find('azimuthTimeInterval').text
@@ -84,9 +85,11 @@ def get_srgrConvParams_from_GRD_annotation(
         'grsrCoefficients':         [],
     }
     for coordinateConversion in coordinateConversionList: 
-        data['azimuthLineTimeUTC'].append(
-            iso8601.parse_date(coordinateConversion.find('azimuthTime').text)
+        azimuthLineTimeUTC = dateutil.parser.parse(
+            coordinateConversion.find('azimuthTime').text
         )
+        azimuthLineTimeUTC = azimuthLineTimeUTC.replace(tzinfo = timezone.utc)
+        data['azimuthLineTimeUTC'].append(azimuthLineTimeUTC)
         data['slantRangeTimeSeconds'].append(
             float(coordinateConversion.find('slantRangeTime').text)
         )

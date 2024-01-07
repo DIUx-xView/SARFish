@@ -4,11 +4,16 @@ These Terms and Conditions ("Terms") apply to the SARFish Challenge sponsored by
 
 **CHALLENGE SPONSOR**: Defence Science and Technology Group (DSTG) with respect to the Challenge.
 
-**CHALLENGE WEBSITE**: "Challenge Website": https://www.github.com/<challenge repo address goes here>
+**CHALLENGE WEBSITE**: "Challenge Website": https://github.com/RitwikGupta/SARFish
 
-**CHALLENGE EVALUATION HOST**: "Challenge Evaluation Host": https://www.kaggle.com/<challenge evaluation site address goes here>
+**CHALLENGE EVALUATION HOST**: "Challenge Evaluation Host": 
+- Maritime Object Detection Track: https://www.kaggle.com/competitions/sarfish-maritime-object-detection
+- Maritime Object Classification Track: https://www.kaggle.com/competitions/sarfish-maritime-object-classification
+- Vessel Length Regression Track: https://www.kaggle.com/competitions/sarfish-vessel-length-regression
 
 **CHALLENGE DATA HOST**: "Challenge Data Host": https://www.huggingface.co/datasets/ConnorLuckettDSTG/SARFish
+
+**CHALLENGE LABELS HOST**: "Challenge Labels Host": https://iuu.xview.us/download-links
 
 **YOU MAY NOT SUBMIT AN ENTRY TO A CHALLENGE UNLESS YOU AGREE TO THESE TERMS. YOUR SUBMISSION OF AN ENTRY IN THE SARFISH CHALLENGE CONSTITUTES YOUR AGREEMENT TO THE CHALLENGE TERMS, CONDITIONS, AND RULES. YOUR SUBMISSION OF AN ENTRY CONSTITUTES A CONTRACT BETWEEN YOU AND THE DSTG.**
 

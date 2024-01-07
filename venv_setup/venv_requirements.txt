@@ -32,8 +32,6 @@ ipykernel
 ipython
 ipython-genutils
 ipywidgets
-iso8601
-isoduration
 jedi
 Jinja2
 json5
@@ -114,7 +112,9 @@ sniffio
 soupsieve
 stack-data
 sympy
+tabulate
 terminado
+tensorboard
 tinycss2
 tomli
 torch

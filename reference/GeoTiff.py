@@ -96,19 +96,21 @@ def load_GeoTiff(image_filepath: str) -> Tuple[
     else:
         nodata_value = None
 
-    mask_band = data_band.GetMaskBand()
-    mask_band_flag = data_band.GetMaskFlags()
+    nodata_mask_band = data_band.GetMaskBand()
+    nodata_mask_band_flag = data_band.GetMaskFlags()
     del data_band
-    if mask_band_flag != 1:
-        number_of_mask_band_rows, number_of_mask_band_columns = get_band_shape(
-            mask_band
+    nodata_mask = np.zeros_like(data, dtype = bool)
+    if nodata_mask_band_flag != 1:
+        number_of_nodata_mask_band_rows, number_of_nodata_mask_band_columns = (
+            get_band_shape(nodata_mask_band)
         )
-        mask = mask_band.ReadAsArray(
-            0, 0, number_of_mask_band_columns, number_of_mask_band_rows
+        nodata_mask = nodata_mask_band.ReadAsArray(
+            0, 0, number_of_nodata_mask_band_columns, number_of_nodata_mask_band_rows
         )
-        # consistent with the way np.ma.masked_array defines masks
-        mask = ~mask 
+        # consistent with the way np.ma.nodata_masked_array defines nodata_masks
+        # where the nodata_mask == True where the data is invalid
+        nodata_mask = ~nodata_mask.astype(bool)
 
-    del mask_band
+    del nodata_mask_band
     del Dataset
-    return data, mask, nodata_value, data_band_data_type_enum
+    return data, nodata_mask, nodata_value, data_band_data_type_enum

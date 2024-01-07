@@ -487,7 +487,7 @@ def compute_length_performance(
         previous_task_true_positive_indices: Dict[str, np.ndarray],
         max_object_length_meters: float = 500.0
     ) -> float:
-    """Returns the mean relative accuracy of the predicted lengths.
+    """Returns the "Aggregate Percentage Error" of the predicted lengths.
     """
 
     if len(groundtruth) == 0:
@@ -546,15 +546,16 @@ def calculate_p_r_f(
         return precision, recall, fscore
 
 def aggregate_f(
-        location_f1_score: float, is_vessel_f1_score: float, 
-        is_fishing_f1_score: float, length_accuracy: float,
+        location_f1_score: float, location_close_to_shore_f1_score: float,
+        is_vessel_f1_score: float, is_fishing_f1_score: float, 
+        vessel_length_regression_track_error: float,
     ) -> float:
     """Returns the xView3-SAR/SARFish challenge aggregate score
     """
     aggregate = (
         location_f1_score * (
-            1 + length_accuracy + is_vessel_f1_score + is_fishing_f1_score + 
-            location_f1_score
+            1 + vessel_length_regression_track_error + is_vessel_f1_score + 
+            is_fishing_f1_score + location_close_to_shore_f1_score 
         ) / 5
     )
     return aggregate
@@ -718,12 +719,22 @@ def classification_score(
     }
     return classification_scores
 
+def compute_maritime_object_detection_track_performance(
+        location_f1_score: float, location_close_to_shore_f1_score: float
+    ) -> float:
+    return np.mean([location_f1_score, location_close_to_shore_f1_score])
+
+def compute_maritime_object_classification_track_performance(
+        is_vessel_f1_score: float, is_fishing_f1_score: float
+    ) -> float:
+    return np.mean([is_vessel_f1_score, is_fishing_f1_score])
+
 def score(
         predictions: pd.DataFrame, groundtruth: pd.DataFrame, 
         xView3_SLC_GRD_correspondences: pd.DataFrame,
         SARFish_root_directory: str, product_type: {"GRD", "SLC"}, 
         shoreline_type: {"xView3_shoreline", "global_shoreline_vector"} = None,
-        distance_from_shore_tolerance_meters = 2000.0, 
+        distance_from_shore_tolerance_meters: float = 2000.0, 
         assignment_tolerance_meters: float = 200.0,
         score_all: bool = False, drop_low_detect: bool = True, 
         costly_dist: bool = False, evaluation_mode: bool = True,
@@ -899,7 +910,7 @@ def score(
     )
     pprint_p_r_f(
         location_precision, location_recall, location_f1_score, 
-        task = "location"
+        task = "Maritime Object Detection Task"
     )
 
     if shoreline_type == None:
@@ -947,31 +958,62 @@ def score(
         pprint_p_r_f(
             location_close_to_shore_precision, 
             location_close_to_shore_recall, 
-            location_close_to_shore_f1_score, "location close to shore"
+            location_close_to_shore_f1_score, 
+            task = "Close-to-Shore Object Detection Task"
         )
 
     classification_scores = classification_score(
         predictions, groundtruth, location_true_positive_indices
     )
+    is_vessel_f1_score = classification_scores['vessel_fscore']
+    is_fishing_f1_score = classification_scores['fishing_fscore']
 
-    length_accuracy = compute_length_performance(
+    vessel_length_regression_track_error = compute_length_performance(
         predictions['vessel_length_m'], groundtruth['vessel_length_m'], 
         location_true_positive_indices
     )
-    pprint_metric("accuracy", length_accuracy, "length regression", CGREEN)
 
-    aggregate = aggregate_f(
-        location_f1_score, classification_scores['vessel_fscore'],
-        classification_scores['fishing_fscore'], length_accuracy
+    aggregate = aggregate_f( 
+        location_f1_score, location_close_to_shore_f1_score, 
+        is_vessel_f1_score, is_fishing_f1_score, 
+        vessel_length_regression_track_error
     )
     pprint_metric("score", aggregate, "aggregate", CCYAN)
 
+    print('\n' + 80 * "\u2550")
+    print(CPURPLE + f"SARFish Challenge Tracks" + CEND)
+    maritime_object_detection_track_score = (
+        compute_maritime_object_detection_track_performance(
+            location_f1_score, location_close_to_shore_f1_score
+        ) 
+    )
+    pprint_metric(
+        "score", maritime_object_detection_track_score, 
+        "Maritime Object Detection Track", CCYAN
+    )
+    maritime_object_classification_track_score = (
+        compute_maritime_object_classification_track_performance(
+            is_vessel_f1_score, is_fishing_f1_score
+        )
+    )
+    pprint_metric(
+        "score", maritime_object_classification_track_score, 
+        "Maritime Object Classification Track", CCYAN
+    )
+    pprint_metric(
+        "error", vessel_length_regression_track_error, 
+        "Vessel Length Regression Track", CCYAN
+    )
     scores = {
         "loc_fscore": location_f1_score,
         "loc_fscore_shore": location_close_to_shore_f1_score,
-        **classification_scores,
-        "length_acc": length_accuracy,
+        "vessel_fscore": is_vessel_f1_score,
+        "fishing_fscore": is_fishing_f1_score,
+        #"length_acc": vessel_length_regression_track_error,
         "aggregate": aggregate,
+        "maritime_object_detection_track_score": maritime_object_detection_track_score,
+        "maritime_object_classification_track_score": maritime_object_classification_track_score,
+        "vessel_length_regression_track_error": vessel_length_regression_track_error
     }
     return scores
 
@@ -1005,7 +1047,7 @@ def SARFish_metric(
     )
     print("")
     for key, value in scores.items():
-        print(f"{key}: ".ljust(18) + f"{value}")
+        print(f"{key}: ".ljust(47) + f"{value}")
 
     return scores
 
@@ -1123,7 +1165,7 @@ def main():
     )
     # defaults
     parser.set_defaults(
-        drop_low_detect = True, costly_dist = True, score_all = False, 
+        drop_low_detect = True, costly_dist = False, score_all = False, 
         evaluation_mode = True
     )
     args = parser.parse_args()
